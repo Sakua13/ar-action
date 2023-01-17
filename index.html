@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>A-Frame AR with pinch scale</title>
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="https://raw.githack.com/jeromeetienne/AR.js/2.0.5/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body>
+    <a-scene embedded arjs scale-controls>
+      <a-marker preset="hiro">
+        <a-box id="cube" material="opacity: 0.75;"></a-box>
+      </a-marker>
+      <a-entity camera></a-entity>
+    </a-scene>
+    
+    <script>
+      AFRAME.registerComponent("scale-controls", {
+        init: function() {
+          this.modelPivotEl = document.getElementById("cube");
+
+          this.onTouchStart = this.onTouchStart.bind(this);
+          this.onTouchMove = this.onTouchMove.bind(this);
+
+          document.addEventListener("touchstart", this.onTouchStart);
+          document.addEventListener("touchmove", this.onTouchMove);
+        },
+
+        onTouchStart: function(evt) {
+          if (evt.touches.length === 3) {
+            this.onTripleTouchStart(evt);
+          }
+        },
+
+        onTouchMove: function(evt) {
+          if (evt.touches.length === 2) {
+            this.onPinchMove(evt);
+          }
+        },
+
+        onTripleTouchStart: function(evt) {
+          // reset
+          var modelPivotEl = this.modelPivotEl;
+          var modelScale = 1;
+          modelPivotEl.object3D.scale.set(modelScale, modelScale, modelScale);
+          this.modelScale = modelScale;
+        },
+
+        onPinchMove: function(evt) {
+          // scaling
+          var dX = evt.touches[0].clientX - evt.touches[1].clientX;
+          var dY = evt.touches[0].clientY - evt.touches[1].clientY;
+          var modelPivotEl = this.modelPivotEl;
+          var distance = Math.sqrt(dX * dX + dY * dY);
+          var oldDistance = this.oldDistance || distance;
+          var distanceDifference = oldDistance - distance;
+          var modelScale = this.modelScale || modelPivotEl.object3D.scale.x;
+
+          modelScale -= distanceDifference / 50;
+          modelScale = Math.min(Math.max(0.1, modelScale), 2.0);
+          // Clamp scale.
+          modelPivotEl.object3D.scale.set(modelScale, modelScale, modelScale);
+
+          this.modelScale = modelScale;
+          this.oldDistance = distance;
+        }
+      });
+    </script>
+    
+  </body>
+</html>
